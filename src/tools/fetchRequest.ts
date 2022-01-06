@@ -4,8 +4,8 @@ import https from "https";
 import qs from "querystring";
 import AbortController from "abort-controller";
 import {Error} from "sequelize";
-
-const fetch = require('node-fetch');
+import fetch, {Headers} from "node-fetch";
+import hasOwnProperty from "./hasOwnProperty";
 
 const debug = require('debug')('app:fetchRequest');
 
@@ -72,9 +72,26 @@ function fetchRequest(url: string, options?: FetchRequestOptions) {
       }, timeout);
     }
 
-    const rawResponse: Response & {buffer: () => Promise<Buffer>} = await fetch(url, {
+    let reqHeaders: [string, string][] | undefined;
+    if (fetchOptions.headers) {
+      reqHeaders = [];
+      for (let key in fetchOptions.headers) {
+        if (!hasOwnProperty(fetchOptions.headers, key)) continue;
+        const value = fetchOptions.headers[key];
+        if (Array.isArray(value)) {
+          value.forEach((value) => {
+            reqHeaders!.push([key, value]);
+          });
+        } else {
+          reqHeaders!.push([key, value || '']);
+        }
+      }
+    }
+
+    const rawResponse = await fetch(url, {
       agent: agentFn,
       ...fetchOptions,
+      headers: reqHeaders,
       signal: controller.signal,
     }).catch((err: Error & any) => {
       if (err.name === 'AbortError' && err.type === 'aborted' && isTimeout) {
@@ -247,9 +264,9 @@ function keepAliveAgentFn(_parsedURL: URL) {
   }
 }
 
-function normalizeHeaders(fetchHeaders: Headers & any) {
+function normalizeHeaders(fetchHeaders: Headers) {
   const headers: Record<string, string | string[]> = {};
-  const rawHeaders: Record<string, string[]> = fetchHeaders.raw();
+  const rawHeaders = fetchHeaders.raw();
   Object.entries(rawHeaders).forEach(([key, values]) => {
     const lowKey = key.toLowerCase();
     if (values.length === 1) {
