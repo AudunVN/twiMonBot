@@ -25,8 +25,8 @@ FROM base as release
 WORKDIR /opt/backend
 COPY --from=build /opt/backend/dist ./dist
 USER nobody:nobody
-COPY ./liveTime.json .
-COPY ./config.json .
+# COPY ./liveTime.json .
+# COPY ./config.json .
 ENV NODE_ENV=production
 ENV DEBUG=app:*
 
