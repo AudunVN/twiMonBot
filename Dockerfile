@@ -32,4 +32,4 @@ ENV DEBUG=app:*
 
 EXPOSE 1339
 
-CMD node ./dist/main.js 1>> ./log/stdout.log 2>> ./log/stderr.log
+CMD node ./dist/main.js
